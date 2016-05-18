@@ -13,6 +13,99 @@ void Renderer::render() {
 	function(plane);
 }
 
+void phoenix_Julia(Plane* plane) {
+        int i, j, k;
+        double series[2];
+	double past_series[2];
+	double tmppast_serie;
+        double tmpserie;
+        double c[2] = {0.269, 0.01};   // 0.01 to tak naprawdę 0.01i, dlatego też konieczna była modyfikacja wzoru
+        double val;                    // zeby móc wrocic do podawania na c[1] liczby nie zespolonej we wzorze, nalezy 
+        double x, y;                   // zmienic - c[1]*past_series[1] na + c[1]*past_series[0] a c[1]*past_series[0] na c[1]*past_series[1]
+        double dx = (plane->right - plane->left) / plane->width; /* Left -> Right */
+        double dy = -(plane->up - plane->down) / plane->height; /* Up -> Down */
+
+        for(i = 0, y = plane->up; i < plane->height; ++i, y += dy) {
+                for(j = 0, x = plane->left; j < plane->width; j++, x += dx) {
+                        series[0]=x;
+                        series[1]=y;
+			past_series[0]=0;
+			past_series[1]=0;
+                        for (k = 0; k < 100; ++k) {
+                                tmpserie = series[0]*series[0] - series[1]*series[1] + c[0] - c[1]*past_series[1];
+				tmppast_serie = series[1];
+                                series[1] = 2*series[0]*series[1] + c[1]*past_series[0];
+				past_series[0] = series[0];
+				past_series[1] = tmppast_serie;
+                                series[0] = tmpserie;
+                                if ((series[0]*series[0] + series[1]*series[1]) > 4)
+                                        break;
+                        }
+
+                        val = (double)k/100;
+
+                        plane->color( val, plane->data + (i*plane->width + j)*3);
+                }
+        }
+}
+
+void quadratur_Mandelbar(Plane* plane) {
+        int i, j, k;
+        double series[2];
+        double tmpserie;
+        double val;
+        double x, y;
+        double dx = (plane->right - plane->left) / (double)(plane->width); /* Left -> Right */
+        double dy = -(plane->up - plane->down) / (double)(plane->height); /* Up -> Down */
+
+        for(i = 0, y = plane->up; i < plane->height; ++i, y += dy) {
+                for(j = 0, x = plane->left; j < plane->width; j++, x += dx) {
+                        series[0]=0;
+                        series[1]=0;
+                        for (k = 0; k < 100; ++k) {
+                                tmpserie = series[0]*series[0]*series[0]*series[0] - 6*series[0]*series[0]*series[1]*series[1] + series[1]*series[1]*series[1]*series[1]+x;
+                                series[1] = -(4*series[0]*series[0]*series[0]*series[1] - 4*series[0]*series[1]*series[1]*series[1]) + y;
+                                series[0] = tmpserie;
+                                if ((series[0]*series[0] + series[1]*series[1]) > 4)
+                                        break;
+                        }
+
+                        val = (double)k/100;
+
+                        plane->color( val, plane->data + (i*plane->width + j)*3);
+                }
+        }
+}
+
+void quadratur_Mandelbrot(Plane* plane) {
+	int i, j, k;
+        double series[2];
+        double tmpserie;
+        double val;
+        double x, y;
+        double dx = (plane->right - plane->left) / (double)(plane->width); /* Left -> Right */
+        double dy = -(plane->up - plane->down) / (double)(plane->height); /* Up -> Down */
+
+        for(i = 0, y = plane->up; i < plane->height; ++i, y += dy) {
+                for(j = 0, x = plane->left; j < plane->width; j++, x += dx) {
+                        series[0]=0;
+                        series[1]=0;
+                        for (k = 0; k < 100; ++k) {
+                                tmpserie = series[0]*series[0]*series[0]*series[0] - 6*series[0]*series[0]*series[1]*series[1] + series[1]*series[1]*series[1]*series[1]+x;
+                                series[1] = 4*series[0]*series[0]*series[0]*series[1] - 4*series[0]*series[1]*series[1]*series[1] + y;
+                                series[0] = tmpserie;
+                                if ((series[0]*series[0] + series[1]*series[1]) > 4)
+                                        break;
+                        }
+
+                        val = (double)k/100;
+
+                        plane->color( val, plane->data + (i*plane->width + j)*3);
+                }
+        }
+}
+
+
 void set_Mandelbrot(Plane* plane) {
 	int i, j, k;
 	double series[2];
@@ -102,7 +195,10 @@ void cubic_Julia(Plane* plane) {
 static r_keys r_map[] = {
 	{"Mandelbrot", set_Mandelbrot},
 	{"Julia", set_Julia},
-	{"Cubic Julia", cubic_Julia}
+	{"Cubic Julia", cubic_Julia},
+	{"Quadratur Mandelbrot", quadratur_Mandelbrot},
+	{"Quadratur Mandelbar", quadratur_Mandelbar},
+	{"Phoenix Julia", phoenix_Julia}
 };
 
 #define NUM_RENDERERS (sizeof(r_map)/sizeof(r_keys))
